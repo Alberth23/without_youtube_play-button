@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vídeo</title>
+  <link rel="preconnect" href="https://www.youtube.com">
+  <link rel="preconnect" href="https://www.google.com">
+  <link rel="preconnect" href="https://i.ytimg.com">
+  <link rel="dns-prefetch" href="https://www.youtube.com">
+  <link rel="dns-prefetch" href="https://www.google.com">
+  <link rel="dns-prefetch" href="https://i.ytimg.com">
+  <style>
+    :root {
+      --bg: #000;
+      --btn-bg: rgba(0,0,0,.6);
+      --btn-bg-hover: rgba(0,0,0,.8);
+      --btn-fg: #fff;
+      --size: 64px;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--btn-fg);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .wrap {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 0;
+    }
+    .player-box {
+      position: relative;
+      width: min(100vw, 1280px);
+      aspect-ratio: 16 / 9;
+      background: #000;
+      overflow: hidden;
+    }
+    .player-box iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .mask {
+      position: absolute;
+      inset: 0;
+      background: #000 center / cover no-repeat;
+      opacity: 1;
+      transition: opacity .12s ease;
+      will-change: opacity;
+      backface-visibility: hidden;
+      transform: translateZ(0);
+      z-index: 1;
+      pointer-events: none;
+    }
+    .mask.hidden { opacity: 0; }
+    @media (prefers-reduced-motion: reduce) { .mask { transition: none; } }
+    .controls {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      pointer-events: auto;
+      z-index: 2;
+    }
+    .playpause {
+      width: var(--size);
+      height: var(--size);
+      border-radius: 999px;
+      border: 0;
+      display: grid;
+      place-items: center;
+      background: var(--btn-bg);
+      color: var(--btn-fg);
+      cursor: pointer;
+      transition: background .2s ease;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    .playpause:hover { background: var(--btn-bg-hover); }
+    .playpause:active { transform: scale(.98); }
+    #overlay { touch-action: manipulation; user-select: none; }
+    .icon {
+      width: 0;
+      height: 0;
+      border-style: solid;
+    }
+    .icon.play {
+      border-width: 12px 0 12px 20px;
+      border-color: transparent transparent transparent currentColor;
+      margin-left: 3px;
+    }
+    .icon.pause {
+      width: 20px;
+      height: 20px;
+      border: none;
+      box-shadow: inset 0 0 0 5px currentColor, inset 10px 0 0 5px currentColor;
+    }
+  </style>
+  <script>
+    const YT_VIDEO_ID = 'xqs-kFebsbM';
+    let player;
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('player', {
+        host: 'https://www.youtube-nocookie.com',
+        videoId: YT_VIDEO_ID,
+        playerVars: {
+          autoplay: 0,
+          controls: 0,
+          modestbranding: 1,
+          rel: 0,
+          iv_load_policy: 3,
+          fs: 0,
+          disablekb: 1,
+          playsinline: 1
+        },
+        events: {
+          onReady: onPlayerReady,
+          onStateChange: onPlayerStateChange
+        }
+      });
+    }
+    function onPlayerReady() {
+      updateButton(false);
+      showMask(true);
+    }
+    function onPlayerStateChange(e) {
+      const playing = e.data === YT.PlayerState.PLAYING;
+      const paused = e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.CUED;
+      const ended = e.data === YT.PlayerState.ENDED;
+      if (playing) { updateButton(true); showMask(false); }
+      if (paused || ended) { updateButton(false); showMask(true); }
+    }
+    function updateButton(isPlaying) {
+      const icon = document.getElementById('icon');
+      const btn = document.getElementById('toggle');
+      if (!icon || !btn) return;
+      icon.className = 'icon ' + (isPlaying ? 'pause' : 'play');
+      btn.setAttribute('aria-label', isPlaying ? 'Pausar' : 'Tocar');
+    }
+    function togglePlay() {
+      if (!player || typeof player.getPlayerState !== 'function') return;
+      const state = player.getPlayerState();
+      const isPlaying = (state === YT.PlayerState.PLAYING || state === YT.PlayerState.BUFFERING);
+      if (isPlaying) {
+        updateButton(false);
+        showMask(true);
+        player.pauseVideo();
+      } else {
+        updateButton(true);
+        showMask(false);
+        player.playVideo();
+      }
+    }
+    function showMask(show) {
+      const el = document.getElementById('mask');
+      if (!el) return;
+      el.classList.toggle('hidden', !show);
+    }
+    function setPoster(url) {
+      const el = document.getElementById('mask');
+      if (!el) return;
+      el.style.backgroundImage = `url(${url})`;
+    }
+    window.addEventListener('DOMContentLoaded', () => {
+      const overlay = document.getElementById('overlay');
+      const toggleBtn = document.getElementById('toggle');
+      const primary = `https://i.ytimg.com/vi/${YT_VIDEO_ID}/maxresdefault.jpg`;
+      const fallback = `https://i.ytimg.com/vi/${YT_VIDEO_ID}/hqdefault.jpg`;
+      const img = new Image();
+      img.onload = () => setPoster(primary);
+      img.onerror = () => setPoster(fallback);
+      img.src = primary;
+      const onPointerDown = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        togglePlay();
+      };
+      toggleBtn.addEventListener('pointerdown', onPointerDown, { passive: false });
+      overlay.addEventListener('pointerdown', (e) => {
+        if (e.target === toggleBtn || e.target.id === 'icon') return;
+        e.preventDefault();
+        togglePlay();
+      }, { passive: false });
+      toggleBtn.addEventListener('keydown', (e) => {
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault();
+          togglePlay();
+        }
+      });
+      overlay.addEventListener('contextmenu', (e) => e.preventDefault());
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden && player && player.pauseVideo) {
+          showMask(true);
+          updateButton(false);
+          player.pauseVideo();
+        }
+      });
+    });
+    (function loadYT() {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(tag);
+      window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+    })();
+  </script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="player-box" id="player-container" aria-label="Reprodutor de vídeo do YouTube">
+      <div id="player"></div>
+      <div class="mask" id="mask" aria-hidden="true"></div>
+      <div class="controls" id="overlay">
+        <button class="playpause" id="toggle" aria-label="Tocar">
+          <span class="icon play" id="icon"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
