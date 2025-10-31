@@ -6,6 +6,7 @@
     #ytw1 .mask{position:absolute;inset:0;background:#000 center/cover no-repeat;opacity:1;transition:opacity .12s ease;will-change:opacity;backface-visibility:hidden;transform:translateZ(0);z-index:1;pointer-events:none}
     #ytw1 .mask.hidden{opacity:0}
     #ytw1 .controls{position:absolute;inset:0;display:grid;place-items:center;pointer-events:auto;z-index:2;touch-action:manipulation;user-select:none}
+    #ytw1 .controls.controls-hidden .btn{opacity:0;pointer-events:none}
     #ytw1 .btn{width:64px;height:64px;border-radius:999px;border:0;display:grid;place-items:center;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;transition:background .2s;outline:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
     #ytw1 .btn:hover{background:rgba(0,0,0,.8)}
     #ytw1 .btn:active{transform:scale(.98)}
@@ -31,22 +32,22 @@
       const iconEl=document.getElementById("ytw1_icon");
       const toggleBtn=document.getElementById("ytw1_toggle");
       const overlay=document.getElementById("ytw1_overlay");
-      let player;
+      let player; var hideTimer;
       function updateButton(p){iconEl.className="icon "+(p?"pause":"play");toggleBtn.setAttribute("aria-label",p?"Pausar":"Tocar")}
       function showMask(s){if(maskEl)maskEl.classList.toggle("hidden",!s)}
       function togglePlay(){
         if(!player||typeof player.getPlayerState!=="function")return;
         const st=player.getPlayerState();
         const playing=(st===YT.PlayerState.PLAYING||st===YT.PlayerState.BUFFERING);
-        if(playing){updateButton(false);showMask(true);player.pauseVideo()}else{updateButton(true);showMask(false);player.playVideo()}
+        if(playing){updateButton(false);showMask(true);showControls();player.pauseVideo()}else{updateButton(true);showMask(false);scheduleHide(800);player.playVideo()}
       }
-      function onReady(){updateButton(false);showMask(true)}
+      function onReady(){updateButton(false);showMask(true);showControls()}
       function onState(e){
         const play=e.data===YT.PlayerState.PLAYING;
         const pause=e.data===YT.PlayerState.PAUSED||e.data===YT.PlayerState.CUED;
         const end=e.data===YT.PlayerState.ENDED;
-        if(play){updateButton(true);showMask(false)}
-        if(pause||end){updateButton(false);showMask(true)}
+        if(play){updateButton(true);showMask(false);scheduleHide()}
+        if(pause||end){updateButton(false);showMask(true);showControls()}
       }
       function setPoster(u){if(maskEl)maskEl.style.backgroundImage="url("+u+")"}
       (function preloadPoster(){
@@ -57,6 +58,9 @@
         img.onerror=function(){setPoster(f)};
         img.src=p;
       })();
+      function showControls(){clearTimeout(hideTimer);overlay.classList.remove("controls-hidden")}
+      function hideControls(){overlay.classList.add("controls-hidden")}
+      function scheduleHide(d=1200){clearTimeout(hideTimer);hideTimer=setTimeout(hideControls,d)}
       function bindUI(){
         const onPD=function(e){e.preventDefault();e.stopPropagation();togglePlay()};
         toggleBtn.addEventListener("pointerdown",onPD,{passive:false});

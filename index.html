@@ -69,6 +69,7 @@
       pointer-events: auto;
       z-index: 2;
     }
+    .controls.controls-hidden .playpause { opacity: 0; pointer-events: none; }
     .playpause {
       width: var(--size);
       height: var(--size);
@@ -107,6 +108,8 @@
   <script>
     const YT_VIDEO_ID = 'xqs-kFebsbM';
     let player;
+    let overlayEl;
+    let hideControlsTimer;
     function onYouTubeIframeAPIReady() {
       player = new YT.Player('player', {
         host: 'https://www.youtube-nocookie.com',
@@ -130,13 +133,14 @@
     function onPlayerReady() {
       updateButton(false);
       showMask(true);
+      showControls();
     }
     function onPlayerStateChange(e) {
       const playing = e.data === YT.PlayerState.PLAYING;
       const paused = e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.CUED;
       const ended = e.data === YT.PlayerState.ENDED;
-      if (playing) { updateButton(true); showMask(false); }
-      if (paused || ended) { updateButton(false); showMask(true); }
+      if (playing) { updateButton(true); showMask(false); scheduleHideControls(); }
+      if (paused || ended) { updateButton(false); showMask(true); showControls(); }
     }
     function updateButton(isPlaying) {
       const icon = document.getElementById('icon');
@@ -152,10 +156,12 @@
       if (isPlaying) {
         updateButton(false);
         showMask(true);
+        showControls();
         player.pauseVideo();
       } else {
         updateButton(true);
         showMask(false);
+        scheduleHideControls(800);
         player.playVideo();
       }
     }
@@ -164,6 +170,21 @@
       if (!el) return;
       el.classList.toggle('hidden', !show);
     }
+    function showControls() {
+      clearTimeout(hideControlsTimer);
+      const el = overlayEl || document.getElementById('overlay');
+      if (!el) return;
+      el.classList.remove('controls-hidden');
+    }
+    function hideControls() {
+      const el = overlayEl || document.getElementById('overlay');
+      if (!el) return;
+      el.classList.add('controls-hidden');
+    }
+    function scheduleHideControls(delay = 1200) {
+      clearTimeout(hideControlsTimer);
+      hideControlsTimer = setTimeout(hideControls, delay);
+    }
     function setPoster(url) {
       const el = document.getElementById('mask');
       if (!el) return;
@@ -171,6 +192,7 @@
     }
     window.addEventListener('DOMContentLoaded', () => {
       const overlay = document.getElementById('overlay');
+      overlayEl = overlay;
       const toggleBtn = document.getElementById('toggle');
       const primary = `https://i.ytimg.com/vi/${YT_VIDEO_ID}/maxresdefault.jpg`;
       const fallback = `https://i.ytimg.com/vi/${YT_VIDEO_ID}/hqdefault.jpg`;
