@@ -1,90 +1,84 @@
-<div id="ytw1">
-  <style>
-    #ytw1{display:block;width:100%;background:#000}
-    #ytw1 .box{position:relative;width:100%;aspect-ratio:16/9;background:#000;overflow:hidden}
-    #ytw1 .box iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none;z-index:0}
-    #ytw1 .mask{position:absolute;inset:0;background:#000 center/cover no-repeat;opacity:1;transition:opacity .12s ease;will-change:opacity;backface-visibility:hidden;transform:translateZ(0);z-index:1;pointer-events:none}
-    #ytw1 .mask.hidden{opacity:0}
-    #ytw1 .controls{position:absolute;inset:0;display:grid;place-items:center;pointer-events:auto;z-index:2;touch-action:manipulation;user-select:none}
-    #ytw1 .controls.controls-hidden .btn{opacity:0;pointer-events:none}
-    #ytw1 .btn{width:64px;height:64px;border-radius:999px;border:0;display:grid;place-items:center;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;transition:background .2s;outline:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-    #ytw1 .btn:hover{background:rgba(0,0,0,.8)}
-    #ytw1 .btn:active{transform:scale(.98)}
-    #ytw1 .icon{width:0;height:0;border-style:solid}
-    #ytw1 .play{border-width:12px 0 12px 20px;border-color:transparent transparent transparent currentColor;margin-left:3px}
-    #ytw1 .pause{width:20px;height:20px;border:none;box-shadow:inset 0 0 0 5px currentColor,inset 10px 0 0 5px currentColor}
-    @media (prefers-reduced-motion:reduce){#ytw1 .mask{transition:none}}
-  </style>
-  <div class="box" aria-label="Reprodutor de vídeo do YouTube">
-    <div id="ytw1_player"></div>
-    <div class="mask" id="ytw1_mask" aria-hidden="true"></div>
-    <div class="controls" id="ytw1_overlay">
-      <button class="btn" id="ytw1_toggle" aria-label="Tocar">
-        <span class="icon play" id="ytw1_icon"></span>
-      </button>
-    </div>
-  </div>
-  <script>
-    (function(){
-      const VID="xqs-kFebsbM";
-      const playerElId="ytw1_player";
-      const maskEl=document.getElementById("ytw1_mask");
-      const iconEl=document.getElementById("ytw1_icon");
-      const toggleBtn=document.getElementById("ytw1_toggle");
-      const overlay=document.getElementById("ytw1_overlay");
-      let player; var hideTimer;
-      function updateButton(p){iconEl.className="icon "+(p?"pause":"play");toggleBtn.setAttribute("aria-label",p?"Pausar":"Tocar")}
-      function showMask(s){if(maskEl)maskEl.classList.toggle("hidden",!s)}
-      function togglePlay(){
-        if(!player||typeof player.getPlayerState!=="function")return;
-        const st=player.getPlayerState();
-        const playing=(st===YT.PlayerState.PLAYING||st===YT.PlayerState.BUFFERING);
-        if(playing){updateButton(false);showMask(true);showControls();player.pauseVideo()}else{updateButton(true);showMask(false);scheduleHide(800);player.playVideo()}
-      }
-      function onReady(){updateButton(false);showMask(true);showControls()}
-      function onState(e){
-        const play=e.data===YT.PlayerState.PLAYING;
-        const pause=e.data===YT.PlayerState.PAUSED||e.data===YT.PlayerState.CUED;
-        const end=e.data===YT.PlayerState.ENDED;
-        if(play){updateButton(true);showMask(false);scheduleHide()}
-        if(pause||end){updateButton(false);showMask(true);showControls()}
-      }
-      function setPoster(u){if(maskEl)maskEl.style.backgroundImage="url("+u+")"}
-      (function preloadPoster(){
-        const p="https://i.ytimg.com/vi/"+VID+"/maxresdefault.jpg";
-        const f="https://i.ytimg.com/vi/"+VID+"/hqdefault.jpg";
-        const img=new Image();
-        img.onload=function(){setPoster(p)};
-        img.onerror=function(){setPoster(f)};
-        img.src=p;
-      })();
-      function showControls(){clearTimeout(hideTimer);overlay.classList.remove("controls-hidden")}
-      function hideControls(){overlay.classList.add("controls-hidden")}
-      function scheduleHide(d=1200){clearTimeout(hideTimer);hideTimer=setTimeout(hideControls,d)}
-      function bindUI(){
-        const onPD=function(e){e.preventDefault();e.stopPropagation();togglePlay()};
-        toggleBtn.addEventListener("pointerdown",onPD,{passive:false});
-        overlay.addEventListener("pointerdown",function(e){if(e.target===toggleBtn||e.target.id==="ytw1_icon")return;e.preventDefault();togglePlay()},{passive:false});
-        toggleBtn.addEventListener("keydown",function(e){if(e.key===" "||e.key==="Enter"){e.preventDefault();togglePlay()}})
-        overlay.addEventListener("contextmenu",function(e){e.preventDefault()});
-        document.addEventListener("visibilitychange",function(){if(document.hidden&&player&&player.pauseVideo){showMask(true);updateButton(false);player.pauseVideo()}})
-      }
-      function initPlayer(){
-        player=new YT.Player(playerElId,{host:"https://www.youtube-nocookie.com",videoId:VID,playerVars:{autoplay:0,controls:0,modestbranding:1,rel:0,iv_load_policy:3,fs:0,disablekb:1,playsinline:1},events:{onReady:onReady,onStateChange:onState}})
-      }
-      function ensureYT(cb){
-        if(window.YT&&YT.Player){cb();return}
-        window._ytwQueue=window._ytwQueue||[];
-        window._ytwQueue.push(cb);
-        if(!window._ytwScriptAppended){
-          window._ytwScriptAppended=true;
-          var s=document.createElement("script");s.src="https://www.youtube.com/iframe_api";document.head.appendChild(s);
-          var prev=window.onYouTubeIframeAPIReady;
-          window.onYouTubeIframeAPIReady=function(){try{if(typeof prev==="function")prev()}catch(e){};var q=window._ytwQueue||[];while(q.length){try{q.shift()()}catch(e){}}};
-        }
-      }
-      bindUI();
-      ensureYT(initPlayer);
-    })();
-  </script>
-</div>
+<div id="ytw1"></div>
+<script>
+(function(){
+  const VID = "xqs-kFebsbM";
+  const HOST_ID = "ytw1";
+  const host = document.getElementById(HOST_ID);
+  if(!host || host.__ytwInit) return; host.__ytwInit = true;
+
+  if(!host.attachShadow){ return; }
+  const root = host.attachShadow({mode:"open"});
+  const origin = encodeURIComponent(location.origin);
+  root.innerHTML = `
+    <style>
+      :host{display:block;width:100%;background:#000}
+      .box{position:relative;width:100%;aspect-ratio:16/9;background:#000;overflow:hidden}
+      iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none;z-index:0}
+      .mask{position:absolute;inset:0;background:#000 center/cover no-repeat;opacity:1;transition:opacity .12s ease;will-change:opacity;backface-visibility:hidden;transform:translateZ(0);z-index:1;pointer-events:none}
+      .mask.hidden{opacity:0}
+      .controls{position:absolute;inset:0;display:grid;place-items:center;pointer-events:auto;z-index:2;touch-action:manipulation;user-select:none}
+      .controls.controls-hidden .btn{opacity:0;pointer-events:none}
+      .btn{width:64px;height:64px;border-radius:999px;border:0;display:grid;place-items:center;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;transition:background .2s;outline:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+      .btn:hover{background:rgba(0,0,0,.8)}
+      .btn:active{transform:scale(.98)}
+      .icon{width:0;height:0;border-style:solid}
+      .play{border-width:12px 0 12px 20px;border-color:transparent transparent transparent currentColor;margin-left:3px}
+      .pause{width:20px;height:20px;border:none;box-shadow:inset 0 0 0 5px currentColor,inset 10px 0 0 5px currentColor}
+      @media (prefers-reduced-motion: reduce){ .mask{transition:none} }
+    </style>
+    <div class="box" aria-label="Reprodutor de vídeo do YouTube">
+      <iframe id="frame" title="YouTube video" allow="autoplay; encrypted-media; picture-in-picture" src="https://www.youtube-nocookie.com/embed/${VID}?enablejsapi=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&fs=0&playsinline=1&origin=${origin}"></iframe>
+      <div class="mask" id="mask" aria-hidden="true"></div>
+      <div class="controls" id="overlay">
+        <button class="btn" id="toggle" aria-label="Tocar"><span class="icon play" id="icon"></span></button>
+      </div>
+    </div>`;
+
+  const $ = (sel) => root.querySelector(sel);
+  const frame = $('#frame');
+  const mask = $('#mask');
+  const icon = $('#icon');
+  const overlay = $('#overlay');
+  const toggle = $('#toggle');
+  let playing = false, hideTimer;
+
+  const post = (func, args=[]) => { try { frame.contentWindow.postMessage(JSON.stringify({event:'command',func, args}), 'https://www.youtube-nocookie.com'); } catch(e){} };
+  const updateButton = (p) => { icon.className = 'icon ' + (p ? 'pause' : 'play'); toggle.setAttribute('aria-label', p ? 'Pausar' : 'Tocar'); };
+  const showMask = (s) => mask.classList.toggle('hidden', !s);
+  const showControls = () => { clearTimeout(hideTimer); overlay.classList.remove('controls-hidden'); };
+  const hideControls = () => overlay.classList.add('controls-hidden');
+  const scheduleHide = (d=1200) => { clearTimeout(hideTimer); hideTimer = setTimeout(hideControls, d); };
+  const play = () => { if (playing) return; playing = true; updateButton(true); showMask(false); scheduleHide(800); post('playVideo'); };
+  const pause = () => { if (!playing) return; playing = false; updateButton(false); showMask(true); showControls(); post('pauseVideo'); };
+  const togglePlay = () => { playing ? pause() : play(); };
+
+  (()=>{ const p=`https://i.ytimg.com/vi/${VID}/maxresdefault.jpg`, f=`https://i.ytimg.com/vi/${VID}/hqdefault.jpg`; const img = new Image(); img.onload=()=>{mask.style.backgroundImage = `url(${p})`}; img.onerror=()=>{mask.style.backgroundImage = `url(${f})`}; img.src=p; })();
+
+  const onPD = (e) => { e.preventDefault(); e.stopPropagation(); togglePlay(); };
+  toggle.addEventListener('pointerdown', onPD, {passive:false});
+  overlay.addEventListener('pointerdown', (e) => { if(e.target===toggle || e.target===icon) return; e.preventDefault(); e.stopPropagation(); togglePlay(); }, {passive:false});
+  toggle.addEventListener('keydown', (e) => { if (e.key===' '|| e.key==='Enter'){ e.preventDefault(); togglePlay(); }});
+  overlay.addEventListener('contextmenu', (e) => { e.preventDefault(); e.stopPropagation(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+
+  const onMsg = (e)=>{
+    if(e.origin !== 'https://www.youtube-nocookie.com' && e.origin !== 'https://www.youtube.com') return;
+    let data = e.data;
+    try { if(typeof data === 'string') data = JSON.parse(data); } catch(_) { return; }
+    if(!data) return;
+    if(data.event === 'onStateChange'){
+      const st = data.info; // 0 ended, 1 playing, 2 paused, 3 buffering, 5 cued
+      if(st === 1){ playing = true; updateButton(true); showMask(false); scheduleHide(); }
+      if(st === 2 || st === 5){ playing = false; updateButton(false); showMask(true); showControls(); }
+      if(st === 0){ playing = false; updateButton(false); showMask(true); showControls(); }
+    } else if (data.event === 'onReady') {
+      showControls();
+    }
+  };
+  window.addEventListener('message', onMsg);
+  frame.addEventListener('load', ()=>{
+    post('addEventListener', ['onStateChange']);
+    post('addEventListener', ['onReady']);
+  });
+})();
+</script>
